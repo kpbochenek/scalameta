@@ -28,7 +28,7 @@ object Test/*<=types.Test.*/ {
     def m/*<=types.Test.M#m().*/: Int/*=>scala.Int#*/ = ???/*=>scala.Predef.`???`().*/
   }
 
-  trait N/*<=types.Test.N#*/ {
+  trait N/*<=types.Test.N#*/ {/*<=types.Test.N#$init$().*/
     def n/*<=types.Test.N#n().*/: Int/*=>scala.Int#*/ = ???/*=>scala.Predef.`???`().*/
   }
 
@@ -56,8 +56,8 @@ object Test/*<=types.Test.*/ {
     val compoundType2/*<=types.Test.C#compoundType2.*/: M/*=>types.Test.M#*/ with N/*=>types.Test.N#*/ = ???/*=>scala.Predef.`???`().*/
     val compoundType3/*<=types.Test.C#compoundType3.*/: M/*=>types.Test.M#*/ with N/*=>types.Test.N#*/ { def k/*<=local1*/: Int/*=>scala.Int#*/ } = ???/*=>scala.Predef.`???`().*/
     val compoundType4/*<=types.Test.C#compoundType4.*/ = new /*<=local2*/{ def k/*<=local3*/: Int/*=>scala.Int#*/ = ???/*=>scala.Predef.`???`().*/ }
-    val compoundType5/*<=types.Test.C#compoundType5.*/ = new M/*=>types.Test.M#*/ with N/*=>types.Test.N#*/
-    val compoundType6/*<=types.Test.C#compoundType6.*/ = new /*<=local5*/M/*=>types.Test.M#*/ with N/*=>types.Test.N#*/ { def k/*<=local6*/: Int/*=>scala.Int#*/ = ???/*=>scala.Predef.`???`().*/ }
+    val compoundType5/*<=types.Test.C#compoundType5.*/ = new M/*=>local4*/ with N/*=>types.Test.N#*/
+    val compoundType6/*<=types.Test.C#compoundType6.*/ = new /*<=local5*/M/*=>local5*/ with N/*=>types.Test.N#*/ { def k/*<=local6*/: Int/*=>scala.Int#*/ = ???/*=>scala.Predef.`???`().*/ }
 
     val annType1/*<=types.Test.C#annType1.*/: T/*=>types.T#*/ @ann/*=>types.ann#*/(42) = ???/*=>scala.Predef.`???`().*/
     val annType2/*<=types.Test.C#annType2.*/: T/*=>types.T#*/ @ann1/*=>types.ann1#*/ @ann2/*=>types.ann2#*/ = ???/*=>scala.Predef.`???`().*/

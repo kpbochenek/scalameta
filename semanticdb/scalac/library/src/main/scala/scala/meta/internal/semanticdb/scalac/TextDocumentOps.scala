@@ -146,6 +146,7 @@ trait TextDocumentOps { self: SemanticdbOps =>
               }
           }
           override def apply(mtree: m.Tree): Unit = {
+            println(s"APPLY ${mtree} ### ${mtree.getClass.getName()}")
             mtree match {
               case mtree @ m.Term.Apply(fun, _) =>
                 indexArgNames(mtree)
@@ -181,6 +182,7 @@ trait TextDocumentOps { self: SemanticdbOps =>
       locally {
         object traverser extends g.Traverser {
           private def trySymbolDefinition(gsym: g.Symbol): Unit = {
+            println(s"TRY SYM ${gsym}")
             if (config.symbols.isNone) return
             if (gsym == null) return
             if (gsym.hasPackageFlag) return
@@ -224,8 +226,14 @@ trait TextDocumentOps { self: SemanticdbOps =>
             // We cannot be guaranteed that all symbols have a position, see
             // https://github.com/scalameta/scalameta/issues/665
             // Instead of crashing with "unsupported file", we ignore these cases.
+            try {
+            println(s"SUCCESS ${gsym0} WITH ${mtree}   <<:<< ${gsym0.getClass.getName}")
+            println(s"SCHECK ??? ${gsym0 == null} AND ${gsym0.isUselessOccurrence} AND ${mtree.pos == m.Position.None} AND ${occurrences.contains(mtree.pos)}")
+            } catch {
+              case e: NullPointerException => println(s"damn null ${gsym0} ::: ${mtree}")
+            }
             if (gsym0 == null) return
-            if (gsym0.isUselessOccurrence) return
+            // if (gsym0.isUselessOccurrence) return
             if (mtree.pos == m.Position.None) return
             if (occurrences.contains(mtree.pos)) return
 
@@ -234,6 +242,8 @@ trait TextDocumentOps { self: SemanticdbOps =>
               if (gsym0 != null && isClassRefInCtorCall) gsym0.owner
               else gsym0
             }
+
+            println(s"NEXT STEP ;]  ${gsym.nameString} ::: ${gsym.toSemantic}  <<>> ${gsym.toSemantic == Symbols.None}")
             val symbol = gsym.toSemantic
             if (symbol == Symbols.None) return
 
@@ -282,6 +292,11 @@ trait TextDocumentOps { self: SemanticdbOps =>
             }
           }
           private def tryFindMtree(gtree: g.Tree): Unit = {
+            println(s"FINDMTREE ${gtree}")
+            if (gtree.isInstanceOf[g.Ident]) {
+              val idt = gtree.asInstanceOf[g.Ident]
+              println(s"IDENT ${idt} :: ${idt.name} :: ${idt.qualifier} ::: ${idt.symbol} !!! ${idt.tpe} ??? ${idt.id}")
+            }
             def tryMstart(start: Int): Boolean = {
               if (!mstarts.contains(start)) return false
               success(mstarts(start), gtree.symbol)
@@ -342,6 +357,7 @@ trait TextDocumentOps { self: SemanticdbOps =>
             if (tryMpos(gstart, gend)) return
 
             val gsym = gtree.symbol
+            println(s"CASE ${gsym} ==> ${gtree}    ### ${gtree.getClass.getName}")
             gtree match {
               case gtree: g.ValDef if gsym.isSelfParameter =>
                 tryMstart(gstart)
@@ -409,12 +425,17 @@ trait TextDocumentOps { self: SemanticdbOps =>
                     )
                 }
               case gtree: g.AppliedTypeTree =>
+                println(s"APPLIED TTYPE TREE CHECK! ${gtree}")
                 if (gtree.symbol.name == g.typeNames.REPEATED_PARAM_CLASS_NAME &&
                   mstarts.contains(gstart) &&
                   gtree.args.nonEmpty) {
+                    println(s"APP TYPE TREE ${mstarts(gstart)} :: ${gtree.args.head.symbol}")
                   success(mstarts(gstart), gtree.args.head.symbol)
+                } else {
+                  println(s"FAILED !! ${gtree.tpt} OF [${gtree.tpt.getClass.getName}] -> ${gtree.symbol} ARGS? ${gtree.args}")
                 }
-              case _ =>
+              case x =>
+                println(s"IGNORING !!! ${x}")
             }
           }
 
@@ -611,6 +632,8 @@ trait TextDocumentOps { self: SemanticdbOps =>
               (0 until classOfChars.length).forall(i => chars(i + pos.start) == classOfChars(i))
             }
 
+            println(s"TRAVERSING => ${gtree} ### ${gtree.getClass.getName}")
+
             gtree match {
               case OriginalTreeOf(original) =>
                 traverse(original)
@@ -638,6 +661,13 @@ trait TextDocumentOps { self: SemanticdbOps =>
                   } =>
                 traverse(body)
               case gtree: g.TypeTree if gtree.original != null =>
+                val s = gtree.symbol
+                println(s"TYPE_TREE SYMBOL: ${s} OF TPE ${gtree.tpe.getClass.getName}")
+                println(s"${s.name} -> ${s.typeParams} <<< ${s.children}")
+                if (gtree.tpe.isInstanceOf[g.RefinedType0]) {
+                  val refType = gtree.tpe.asInstanceOf[g.RefinedType0]
+                  println(s"REF TYPE ${refType.typeSymbol} :: ${refType.decls} ==> ${refType.kind} ??? ${refType.declarations}")
+                }
                 traverse(gtree.original)
               case gtree: g.TypeTreeWithDeferredRefCheck =>
                 traverse(gtree.check())
@@ -676,6 +706,12 @@ trait TextDocumentOps { self: SemanticdbOps =>
                 tryFindMtree(select.qualifier)
                 tryFindSynthetic(select)
               case gtree: g.AppliedTypeTree =>
+                import scala.reflect.runtime.universe._
+                println("------------------------------------")
+                println(showRaw(gtree))
+                println(show(gtree))
+                println("------------------------------------")
+                println(s"VERIFY ${gtree.tpt} AND ${gtree.args} <<::<< ${gtree.tpt.symbol}")
                 tryFindMtree(gtree)
               case gblock @ NamedApplyBlock(_) =>
                 // Given the result of NamesDefaults.transformNamedApplication, such as:
@@ -720,6 +756,7 @@ trait TextDocumentOps { self: SemanticdbOps =>
           }
         }
         traverser.traverse(unit.body)
+
       }
 
       val finalSymbols = symbols.values.toList

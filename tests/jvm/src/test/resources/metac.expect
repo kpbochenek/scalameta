@@ -300,7 +300,7 @@ Uri => semanticdb/integration/src/main/scala/example/Annotations.scala
 Text => non-empty
 Language => Scala
 Symbols => 21 entries
-Occurrences => 48 entries
+Occurrences => 60 entries
 
 Symbols:
 annot/Alias. => final object Alias extends AnyRef { +1 decls }
@@ -374,38 +374,50 @@ Occurrences:
 [4:22..4:34): experimental => scala/language.experimental.
 [4:35..4:41): macros => scala/language.experimental.macros.
 [6:1..6:16): ClassAnnotation => com/javacp/annot/ClassAnnotation#
+[6:16..6:16):  => com/javacp/annot/ClassAnnotation#`<init>`().
 [7:6..7:17): Annotations <= annot/Annotations#
 [7:19..7:42): TypeParameterAnnotation => com/javacp/annot/TypeParameterAnnotation#
+[7:43..7:43):  => com/javacp/annot/TypeParameterAnnotation#`<init>`().
 [7:43..7:44): T <= annot/Annotations#[T]
 [7:45..7:45):  <= annot/Annotations#`<init>`().
 [7:47..7:66): ParameterAnnotation => com/javacp/annot/ParameterAnnotation#
+[7:67..7:67):  => com/javacp/annot/ParameterAnnotation#`<init>`().
 [7:67..7:68): x <= annot/Annotations#x.
 [7:70..7:71): T => annot/Annotations#[T]
 [7:75..7:79): self <= local0
 [8:3..8:18): FieldAnnotation => com/javacp/annot/FieldAnnotation#
+[8:18..8:18):  => com/javacp/annot/FieldAnnotation#`<init>`().
 [9:6..9:11): field <= annot/Annotations#field.
 [11:3..11:19): MethodAnnotation => com/javacp/annot/MethodAnnotation#
+[11:19..11:19):  => com/javacp/annot/MethodAnnotation#`<init>`().
 [12:6..12:12): method <= annot/Annotations#method().
 [13:5..13:20): LocalAnnotation => com/javacp/annot/LocalAnnotation#
+[13:20..13:20):  => com/javacp/annot/LocalAnnotation#`<init>`().
 [14:8..14:13): local <= local1
 [15:4..15:9): local => local1
 [17:3..17:17): TypeAnnotation => com/javacp/annot/TypeAnnotation#
+[17:17..17:17):  => com/javacp/annot/TypeAnnotation#`<init>`().
 [18:7..18:8): T <= annot/Annotations#T#
 [21:6..21:7): B <= annot/B#
 [21:9..21:30): ConstructorAnnotation => com/javacp/annot/ConstructorAnnotation#
+[21:30..21:30):  => com/javacp/annot/ConstructorAnnotation#`<init>`().
 [21:33..21:33):  <= annot/B#`<init>`().
 [21:34..21:35): x <= annot/B#x.
 [21:37..21:40): Int => scala/Int#
 [22:3..22:24): ConstructorAnnotation => com/javacp/annot/ConstructorAnnotation#
+[22:24..22:24):  => com/javacp/annot/ConstructorAnnotation#`<init>`().
 [23:19..23:19):  => annot/B#`<init>`().
 [26:1..26:17): ObjectAnnotation => com/javacp/annot/ObjectAnnotation#
+[26:17..26:17):  => com/javacp/annot/ObjectAnnotation#`<init>`().
 [27:7..27:8): M <= annot/M.
 [28:3..28:18): MacroAnnotation => com/javacp/annot/MacroAnnotation#
+[28:18..28:18):  => com/javacp/annot/MacroAnnotation#`<init>`().
 [29:6..29:7): m <= annot/M.m().
 [29:8..29:10): TT <= annot/M.m().[TT]
 [29:13..29:16): Int => scala/Int#
 [29:25..29:28): ??? => scala/Predef.`???`().
 [32:1..32:16): TraitAnnotation => com/javacp/annot/TraitAnnotation#
+[32:16..32:16):  => com/javacp/annot/TraitAnnotation#`<init>`().
 [33:6..33:7): T <= annot/T#
 [35:7..35:12): Alias <= annot/Alias.
 [36:7..36:8): A <= annot/Alias.A#
@@ -476,7 +488,7 @@ Occurrences:
 [12:29..12:32): ??? => scala/Predef.`???`().
 [15:8..15:11): Foo <= example/Anonymous#Foo#
 [16:6..16:6):  <= local4
-[16:6..16:9): Foo => example/Anonymous#Foo#
+[16:6..16:9): Foo => local4
 [16:10..16:10):  => java/lang/Object#`<init>`().
 
 Synthetics:
@@ -907,7 +919,7 @@ Occurrences:
 [13:23..13:26): Int => scala/Int#
 [16:11..16:13): C6 <= classes/C6#
 [16:13..16:13):  <= classes/C6#`<init>`().
-[16:26..16:27): x <= classes/C6#
+[16:26..16:27): x <= classes/C6#x.
 [16:29..16:32): Int => scala/Int#
 [18:6..18:8): C7 <= classes/C7#
 [18:8..18:8):  <= classes/C7#`<init>`().
@@ -924,7 +936,7 @@ Occurrences:
 [24:7..24:8): N <= classes/N.
 [25:6..25:15): anonClass <= classes/N.anonClass.
 [25:22..25:22):  <= local8
-[25:22..25:24): C7 => classes/C7#
+[25:22..25:24): C7 => local8
 [25:24..25:24):  => classes/C7#`<init>`().
 [26:8..26:13): local <= local9
 [26:16..26:19): ??? => scala/Predef.`???`().
@@ -1996,6 +2008,30 @@ Synthetics:
   Int => scala/math/Ordering.Int.
 [14:2..14:5): map => *.update
   update => scala/collection/mutable/MapLike#update().
+
+semanticdb/integration/src/main/scala/example/Issue1916.scala
+-------------------------------------------------------------
+
+Summary:
+Schema => SemanticDB v4
+Uri => semanticdb/integration/src/main/scala/example/Issue1916.scala
+Text => non-empty
+Language => Scala
+Symbols => 2 entries
+Occurrences => 3 entries
+
+Symbols:
+example/Issue1916# => class Issue1916 extends AnyRef { self: Map[String, Int] => +1 decls }
+  AnyRef => scala/AnyRef#
+  Map => scala/Predef.Map#
+  String => scala/Predef.String#
+  Int => scala/Int#
+example/Issue1916#`<init>`(). => primary ctor <init>()
+
+Occurrences:
+[1:8..1:15): example <= example/
+[3:6..3:15): Issue1916 <= example/Issue1916#
+[3:16..3:16):  <= example/Issue1916#`<init>`().
 
 semanticdb/integration/src/main/scala/example/local-file.scala
 --------------------------------------------------------------
@@ -3753,7 +3789,7 @@ Uri => semanticdb/integration/src/main/scala/example/Traits.scala
 Text => non-empty
 Language => Scala
 Symbols => 10 entries
-Occurrences => 15 entries
+Occurrences => 16 entries
 
 Symbols:
 local0 => final class $anon extends AnyRef with U
@@ -3781,13 +3817,14 @@ traits/V# => trait V extends AnyRef { self: C =>  }
 Occurrences:
 [0:8..0:14): traits <= traits/
 [2:6..2:7): T <= traits/T#
+[2:8..2:9): { <= traits/T#$init$().
 [3:6..3:7): x <= traits/T#x().
 [6:13..6:14): U <= traits/U#
 [7:7..7:8): U <= traits/U.
 [8:6..8:7): u <= traits/U.u().
 [8:9..8:10): U => traits/U#
 [8:17..8:17):  <= local0
-[8:17..8:18): U => traits/U#
+[8:17..8:18): U => local0
 [8:19..8:19):  => java/lang/Object#`<init>`().
 [11:6..11:7): C <= traits/C#
 [11:7..11:7):  <= traits/C#`<init>`().
@@ -3804,7 +3841,7 @@ Uri => semanticdb/integration/src/main/scala/example/Types.scala
 Text => non-empty
 Language => Scala
 Symbols => 140 entries
-Occurrences => 249 entries
+Occurrences => 250 entries
 
 Symbols:
 local0 => abstract method k: Int
@@ -4176,6 +4213,7 @@ Occurrences:
 [27:11..27:14): Int => scala/Int#
 [27:17..27:20): ??? => scala/Predef.`???`().
 [30:8..30:9): N <= types/Test.N#
+[30:10..30:11): { <= types/Test.N#$init$().
 [31:8..31:9): n <= types/Test.N#n().
 [31:11..31:14): Int => scala/Int#
 [31:17..31:20): ??? => scala/Predef.`???`().
@@ -4247,12 +4285,12 @@ Occurrences:
 [57:43..57:46): ??? => scala/Predef.`???`().
 [58:8..58:21): compoundType5 <= types/Test.C#compoundType5.
 [58:28..58:28):  <= local4
-[58:28..58:29): M => types/Test.M#
+[58:28..58:29): M => local4
 [58:30..58:30):  => types/Test.M#`<init>`().
 [58:35..58:36): N => types/Test.N#
 [59:8..59:21): compoundType6 <= types/Test.C#compoundType6.
 [59:28..59:28):  <= local5
-[59:28..59:29): M => types/Test.M#
+[59:28..59:29): M => local5
 [59:30..59:30):  => types/Test.M#`<init>`().
 [59:35..59:36): N => types/Test.N#
 [59:43..59:44): k <= local6
