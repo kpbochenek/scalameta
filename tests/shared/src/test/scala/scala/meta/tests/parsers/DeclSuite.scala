@@ -153,4 +153,14 @@ class DeclSuite extends ParseSuite {
     ) =
       templStat("def f[T]: T")
   }
+
+  test("transform-lambda-properly") {
+    val program = """object A {
+                 |  val b = Some(2).map("key" -> _.toString)
+                 |  val c = 0
+                 |}
+                 |""".stripMargin
+    val result = source(program).transform({ case q"0" => q"3" }).toString
+    assertEquals(result, program.replaceAll("0", "3"))
+  }
 }
