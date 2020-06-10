@@ -180,6 +180,10 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     }
   }
 
+  class SignificantIndentation {
+
+  }
+
   /* ------------- PARSER-SPECIFIC TOKENS -------------------------------------------- */
 
   // NOTE: Scala's parser isn't ready to accept whitespace and comment tokens,
@@ -194,6 +198,14 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   lazy val (parserTokens, parserTokenPositions) = {
     val parserTokens = mutable.ArrayBuilder.make[Token]
     val parserTokenPositions = mutable.ArrayBuilder.make[Int]
+
+    var IW: mutable.Stack[Int] = mutable.Stack()
+    var previousIndent = 0
+    var currentIndent = 0
+    var calculating = true
+    var makeIndent = false
+    var makeOutdents = 0
+
     @tailrec def loop(prevPos: Int, currPos: Int, sepRegions: List[Char]): Unit = {
       if (currPos >= scannerTokens.length) return
       val prev = if (prevPos >= 0) scannerTokens(prevPos) else null
@@ -205,6 +217,51 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         i
       }
       val next = if (nextPos != -1) scannerTokens(nextPos) else null
+
+      makeIndent = false
+      makeOutdents = 0
+
+      if (curr.is[ColonEol]) {
+        makeIndent = true
+      }
+
+      if (curr.is[LineEnd]) {
+        previousIndent = currentIndent
+        currentIndent = 0
+        calculating = true
+      }
+
+      if (curr.is[Whitespace] && calculating) {
+        currentIndent += 1
+      }
+      if (!curr.is[Whitespace] && calculating) {
+        calculating = false
+        if (currentIndent > previousIndent) {
+          IW.push(currentIndent)
+          // emit Indent
+          // parserTokens += new Indentation.Indent(curr.input, curr.dialect, 0, 0)
+          // parserTokenPositions += currPos
+        }
+        if (currentIndent < previousIndent) {
+          // emit Outdent
+          while (IW.nonEmpty && IW.head > currentIndent) {
+            // parserTokens += new Indentation.Outdent(curr.input, curr.dialect, 0, 0)
+            // parserTokens += new RightBr(curr.input, curr.dialect, 0, 0)
+            // parserTokenPositions += currPos
+            IW.pop()
+            makeOutdents += 1
+          }
+        }
+      }
+
+      if (curr.is[EOF]) {
+        while (IW.nonEmpty) {
+          IW.pop()
+          makeOutdents += 1
+        }
+      }
+
+
       // SIP-27 Trailing comma (multi-line only) support.
       // If a comma is followed by a new line & then a closing paren, bracket or brace
       // then it is a trailing comma and is ignored.
@@ -214,10 +271,26 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           next.is[CloseDelim] &&
           next.pos.startLine > curr.pos.endLine
       if (curr.isNot[Trivia] && !isTrailingComma) {
-        parserTokens += curr
-        parserTokenPositions += currPos
+        if (makeIndent) {
+          parserTokens += new LeftBrace(curr.input, curr.dialect, curr.start)
+          parserTokenPositions += currPos
+        } else if (makeOutdents > 0) {
+          while (makeOutdents > 0) {
+            makeOutdents -= 1
+            parserTokens += new RightBrace(curr.input, curr.dialect, curr.start)
+            parserTokenPositions += currPos
+            if (curr.is[EOF]) {
+              parserTokens += curr
+              parserTokenPositions += currPos
+            }
+          }
+        } else {
+          parserTokens += curr
+          parserTokenPositions += currPos
+        }
         val sepRegions1 = {
           if (curr.is[LeftParen]) ')' :: sepRegions
+          else if (makeIndent) 'O' :: sepRegions
           else if (curr.is[LeftBracket]) ']' :: sepRegions
           else if (curr.is[LeftBrace]) {
             // After encountering keyword Enum we add artificial '{' on top of stack.
@@ -234,6 +307,12 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           } else if (curr.is[RightBrace]) {
             var sepRegions1 = sepRegions
             while (!sepRegions1.isEmpty && (sepRegions1.head != '}' || sepRegions1.head != '$'))
+              sepRegions1 = sepRegions1.tail
+            if (!sepRegions1.isEmpty) sepRegions1 = sepRegions1.tail
+            sepRegions1
+          } else if (makeOutdents > 0) {
+            var sepRegions1 = sepRegions
+            while (!sepRegions1.isEmpty && (sepRegions1.head != 'O'))
               sepRegions1 = sepRegions1.tail
             if (!sepRegions1.isEmpty) sepRegions1 = sepRegions1.tail
             sepRegions1
@@ -639,7 +718,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   }
 
   @classifier
-  trait InlineSoftModifier {
+  trait InlineSoftIdent {
     private def noIdentAhead() =
       ahead(token.isNot[Ident] && !DclIntro.unapply(token) && !Modifier.unapply(token))
 
@@ -2768,7 +2847,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           token.is[Subtype] || token.is[Supertype] || token.is[Viewbound]
       )
     def loop(mods: List[Mod]): List[Mod] = token match {
-      case InlineSoftModifier() => mods
+      case InlineSoftIdent() => mods
       case Unquote() => if (continueLoop) mods else loop(appendMod(mods, modifier()))
       case Ellipsis(_) => loop(appendMod(mods, modifier()))
       case Modifier() => loop(appendMod(mods, modifier()))

@@ -81,7 +81,9 @@ final class Dialect private (
     // differs from ToplevelTerms because here you can define packages
     val allowToplevelStatements: Boolean,
     // Opaque types introduced in dotty
-    val allowOpaqueTypes: Boolean
+    val allowOpaqueTypes: Boolean,
+    // Significant identation introduced in dotty
+    val allowSignificantIndentation: Boolean
 ) extends Product
     with Serializable {
 
@@ -148,7 +150,8 @@ final class Dialect private (
       allowOpenClass = false,
       allowWhiteboxMacro = false,
       allowToplevelStatements = false,
-      allowOpaqueTypes = false
+      allowOpaqueTypes = false,
+      allowSignificantIndentation = false
       // NOTE(olafur): declare the default value for new fields above this comment.
     )
   }
@@ -254,6 +257,11 @@ final class Dialect private (
     privateCopy(allowOpaqueTypes = newValue)
   }
 
+  def withAllowSignificantIndentation(newValue: Boolean): Dialect = {
+    privateCopy(allowSignificantIndentation = newValue)
+  }
+  
+
   // NOTE(olafur): add the next `withX()` method above this comment. Please try
   // to use consistent formatting, use `newValue` as the parameter name and wrap
   // the body inside curly braces.
@@ -290,7 +298,8 @@ final class Dialect private (
       allowOpenClass: Boolean = this.allowOpenClass,
       allowWhiteboxMacro: Boolean = this.allowWhiteboxMacro,
       allowToplevelStatements: Boolean = this.allowToplevelStatements,
-      allowOpaqueTypes: Boolean = this.allowOpaqueTypes
+      allowOpaqueTypes: Boolean = this.allowOpaqueTypes,
+      allowSignificantIndentation: Boolean = this.allowSignificantIndentation
       // NOTE(olafur): add the next parameter above this comment.
   ): Dialect = {
     new Dialect(
@@ -324,7 +333,8 @@ final class Dialect private (
       allowOpenClass,
       allowWhiteboxMacro,
       allowToplevelStatements,
-      allowOpaqueTypes
+      allowOpaqueTypes,
+      allowSignificantIndentation
       // NOTE(olafur): add the next argument above this comment.
     )
   }

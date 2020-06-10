@@ -114,6 +114,7 @@ class ScalametaTokenizer(input: Input, dialect: Dialect) {
         case SEMI => Token.Semicolon(input, dialect, curr.offset)
         case DOT => Token.Dot(input, dialect, curr.offset)
         case COLON => Token.Colon(input, dialect, curr.offset)
+        case COLONEOL => Token.ColonEol(input, dialect, curr.offset)
         case EQUALS => Token.Equals(input, dialect, curr.offset)
         case AT => Token.At(input, dialect, curr.offset)
         case HASH => Token.Hash(input, dialect, curr.offset)
@@ -164,6 +165,21 @@ class ScalametaTokenizer(input: Input, dialect: Dialect) {
     val tokens = new java.util.ArrayList[Token]()
     tokens.add(Token.BOF(input, dialect))
 
+    def aheadIsNewLine(index: Int): Boolean = {
+      var currentIdx = index + 1
+      while (currentIdx < legacyTokens.length) {
+        val token = legacyTokens(currentIdx)
+        if (token.token == WHITESPACE && token.strVal == "\n") {
+          return true
+        } else if (token.token == WHITESPACE) {
+          currentIdx += 1
+        } else {
+          return false
+        }
+      }
+      false
+    }
+
     def loop(
         startingFrom: Int,
         braceBalance: Int = 0,
@@ -175,6 +191,10 @@ class ScalametaTokenizer(input: Input, dialect: Dialect) {
       def emitToken() = tokens.add(legacyTokenToToken(curr))
       def nextToken() = legacyIndex += 1
       if (legacyIndex >= legacyTokens.length) return legacyIndex
+
+      if (dialect.allowSignificantIndentation && curr.token == COLON && aheadIsNewLine(legacyIndex)) {
+        curr.token = COLONEOL
+      }
 
       emitToken()
       nextToken()
