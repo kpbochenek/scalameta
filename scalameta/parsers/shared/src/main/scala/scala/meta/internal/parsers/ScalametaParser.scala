@@ -195,14 +195,12 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     val parserTokens = mutable.ArrayBuilder.make[Token]
     val parserTokenPositions = mutable.ArrayBuilder.make[Int]
 
-    var IW: mutable.Stack[Int] = mutable.Stack()
-    var previousIndent = 0
     var currentIndent = 0
     var calculateAndEmitIndent = false
-    var makeIndent = 0
-    var makeOutdents = 0
+    var mustEmit = false
+    var makeIndent = -1
 
-    @tailrec def loop(prevPos: Int, currPos: Int, sepRegions: List[(Char, Int)]): Unit = {
+    @tailrec def loop(prevPos: Int, currPos: Int, sepRegionsP: List[(Char, Int)]): Unit = {
       if (currPos >= scannerTokens.length) return
       val prev = if (prevPos >= 0) scannerTokens(prevPos) else null
       val curr = scannerTokens(currPos)
@@ -213,11 +211,14 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         i
       }
       val next = if (nextPos != -1) scannerTokens(nextPos) else null
-
-      println(s"DEBUG ${curr.name}(${curr.text}) --> ${makeIndent} << ${calculateAndEmitIndent}")
-
+      
       if (dialect.allowSignificantIndentation) {
         if (curr.is[ColonEol]) {
+          calculateAndEmitIndent = true
+          currentIndent = 0
+          mustEmit = true
+        }
+        else if (curr.is[LineEnd] && sepRegionsP.nonEmpty && sepRegionsP.head._1 == 'O') {
           calculateAndEmitIndent = true
           currentIndent = 0
         }
@@ -225,13 +226,13 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           currentIndent += 1
         }
         else if (curr.isNot[Whitespace] && calculateAndEmitIndent) {
-          println(s"BOOOOM< ${currentIndent}")
+          println(s"MAKE INDENT => ${currentIndent} :: !${curr.text}!")
           makeIndent = currentIndent
+          currentIndent = 0
           calculateAndEmitIndent = false
         }
-        else if (curr.is[EOF] && sepRegions.nonEmpty) {
-          sepRegions.filter(_._1 == 'O').foreach { _ => 
-              println("Outdent!")
+        else if (curr.is[EOF]) {
+          sepRegionsP.filter(_._1 == 'O').foreach { _ => 
               parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
               parserTokenPositions += currPos
           }
@@ -248,27 +249,22 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           next.pos.startLine > curr.pos.endLine
       if (curr.isNot[Trivia] && !isTrailingComma) {
 
-        if (makeIndent > 0) {
-          if (sepRegions.nonEmpty && sepRegions.head._1 == 'O') {
-            if (sepRegions.head._2 > makeIndent) {
-              parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
-              parserTokenPositions += currPos
-            }
+        val sepRegions = if (makeIndent >= 0) {
+          var sepRegionsI = sepRegionsP
+          while (sepRegionsI.nonEmpty && sepRegionsI.head._1 == 'O' && sepRegionsI.head._2 > makeIndent) {
+            parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
+            parserTokenPositions += currPos
+            sepRegionsI = sepRegionsI.tail
           }
-          println("Indenting!")
-          parserTokens += new Indentation.Indent(curr.input, curr.dialect, curr.start, curr.end)
-          parserTokenPositions += currPos
-        }
-        //  else if (makeOutdents > 0) {
-        //   while (makeOutdents > 0) {
-        //     makeOutdents -= 1
-        //     parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
-        //     parserTokenPositions += currPos
-        //     if (curr.is[EOF]) {
-        //       parserTokens += curr
-        //       parserTokenPositions += currPos
-        //     }
-        //   }
+
+          if (mustEmit) {
+            println("Indenting!")
+            parserTokens += new Indentation.Indent(curr.input, curr.dialect, curr.start, curr.end)
+            parserTokenPositions += currPos
+            mustEmit = false
+          }
+          sepRegionsI
+        } else { sepRegionsP }
 
         parserTokens += curr
         parserTokenPositions += currPos
@@ -290,16 +286,12 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
             if (!sepRegions.isEmpty && sepRegions.head._1 == '$') sepRegions
             else ('\u21d2', 0) :: sepRegions
           } else if (curr.is[RightBrace]) {
+            println(s"BEFORE ${sepRegions}")
             var sepRegions1 = sepRegions
-            while (!sepRegions1.isEmpty && (sepRegions1.head._1 != '}' || sepRegions1.head._1 != '$'))
+            while (!sepRegions1.isEmpty && (sepRegions1.head._1 != '}' && sepRegions1.head._1 != '$'))
               sepRegions1 = sepRegions1.tail
             if (!sepRegions1.isEmpty) sepRegions1 = sepRegions1.tail
-            sepRegions1
-          } else if (makeOutdents > 0) {
-            var sepRegions1 = sepRegions
-            while (!sepRegions1.isEmpty && (sepRegions1.head._1 != 'O'))
-              sepRegions1 = sepRegions1.tail
-            if (!sepRegions1.isEmpty) sepRegions1 = sepRegions1.tail
+            println(s"AFTER ${sepRegions1}")
             sepRegions1
           } else if (curr.is[RightBracket]) {
             if (!sepRegions.isEmpty && sepRegions.head._1 == ']') sepRegions.tail else sepRegions
@@ -309,7 +301,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
             if (!sepRegions.isEmpty && sepRegions.head._1 == '\u21d2') sepRegions.tail else sepRegions
           } else sepRegions // do nothing for other tokens
         }
-        makeIndent = 0
+        makeIndent = -1
         loop(currPos, currPos + 1, sepRegions1)
       } else {
         var i = prevPos + 1
@@ -318,24 +310,28 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         var newlines = false
         while (i < nextPos) {
           if (scannerTokens(i).is[LF] || scannerTokens(i).is[FF]) {
+            currentIndent = 0
             lastNewlinePos = i
             if (newlineStreak) newlines = true
             newlineStreak = true
           }
           newlineStreak &= scannerTokens(i).is[Whitespace]
           i += 1
+          if (scannerTokens(i).is[Space] || scannerTokens(i).is[Tab]) {
+          currentIndent += 1
+          }
         }
         if (lastNewlinePos != -1 &&
           prev != null && prev.is[CanEndStat] &&
           next != null && next.isNot[CantStartStat] &&
-          (sepRegions.isEmpty || sepRegions.head._1 == '}' || sepRegions.head._1 == '$')) {
+          (sepRegionsP.isEmpty || sepRegionsP.head._1 == '}' || sepRegionsP.head._1 == '$' || sepRegionsP.head._1 == 'O')) {
           var token = scannerTokens(lastNewlinePos)
           if (newlines) token = LFLF(token.input, token.dialect, token.start, token.end)
           parserTokens += token
           parserTokenPositions += lastNewlinePos
-          loop(lastNewlinePos, currPos + 1, sepRegions)
+          loop(lastNewlinePos, currPos + 1, sepRegionsP)
         } else {
-          loop(prevPos, nextPos, sepRegions)
+          loop(prevPos, nextPos, sepRegionsP)
         }
       }
     }
@@ -343,7 +339,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     val underlying = parserTokens.result
 
     println("-" * 30)
-    underlying.foreach(t => println(s"${t.text} => ${t.name}"))
+    //underlying.foreach(t => println(s"TOKEN ${t.name} :: ${t.text}"))
     println("-" * 30)
 
     (Tokens(underlying, 0, underlying.length), parserTokenPositions.result)
@@ -742,7 +738,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   @classifier
   trait StatSeqEnd {
     def unapply(token: Token): Boolean = {
-      token.is[RightBrace] || token.is[Indentation.Outdent] || token.is[EOF]
+      token.is[RightBrace] || token.is[EOF] || token.is[Indentation.Outdent]
     }
   }
 
@@ -776,8 +772,9 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
       token.is[Ident] || token.is[Literal] ||
       token.is[Interpolation.End] || token.is[Xml.End] ||
       token.is[KwReturn] || token.is[KwThis] || token.is[KwType] ||
-      token.is[RightParen] || token.is[RightBracket] || token.is[RightBrace] || token.is[Indentation.Outdent]
+      token.is[RightParen] || token.is[RightBracket] || token.is[RightBrace] ||
       token.is[Underscore] || token.is[Ellipsis] || token.is[Unquote] ||
+      token.is[Indentation.Outdent] ||
       token.is[MacroQuotedIdent] || token.is[MacroSplicedIdent]
     }
   }
@@ -785,7 +782,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   @classifier
   trait StatSep {
     def unapply(token: Token): Boolean = {
-      token.is[Semicolon] || token.is[LF] || token.is[LFLF] || token.is[EOF]
+      token.is[Semicolon] || token.is[LF] || token.is[LFLF] || token.is[EOF] || token.is[Indentation.Outdent]
     }
   }
 
@@ -3443,7 +3440,8 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
 
     newLineOptWhenFollowedBy[LeftBrace]
     val restype = fromWithinReturnType(typedOpt())
-    if (token.is[StatSep] || token.is[RightBrace] || token.is[Indentation.Outdent]) {
+    println(s"IS STAT SEP ${token.text}? ${token.is[StatSep]}")
+    if (token.is[StatSep] || token.is[RightBrace]) {
       if (restype.isEmpty) {
         warnProcedureDeprecation
         Decl.Def(
@@ -3945,7 +3943,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     val stats = new ListBuffer[T]
     while (!token.is[StatSeqEnd]) {
       def isDefinedInEllipsis = {
-        if (token.is[LeftParen] || token.is[LeftBrace] || token.is[Indentation.Indent]) next(); statpf.isDefinedAt(token)
+        if (token.is[LeftParen] || token.is[LeftBrace]) next(); statpf.isDefinedAt(token)
       }
       if (statpf.isDefinedAt(token) || (token.is[Ellipsis] && ahead(isDefinedInEllipsis)))
         stats += statpf(token)

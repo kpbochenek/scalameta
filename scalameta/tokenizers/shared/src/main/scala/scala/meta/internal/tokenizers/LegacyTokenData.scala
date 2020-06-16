@@ -31,8 +31,6 @@ trait LegacyTokenData {
   /** the base of a number */
   var base: Int = 0
 
-  var previousIndent = 0
-
   def copyFrom(td: LegacyTokenData): this.type = {
     this.input = td.input
     this.token = td.token
