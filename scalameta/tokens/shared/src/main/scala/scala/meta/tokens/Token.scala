@@ -73,7 +73,7 @@ object Token {
   // Symbolic keywords
   @fixed("#") class Hash extends Token
   @fixed(":") class Colon extends Token
-  @fixed(":") class ColonEol extends Token
+  @fixed("colonEol") class ColonEol extends Token
   @fixed("<%") class Viewbound extends Token
   @freeform("<-") class LeftArrow extends Token
   @fixed("<:") class Subtype extends Token
