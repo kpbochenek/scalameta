@@ -194,10 +194,12 @@ class ScalametaTokenizer(input: Input, dialect: Dialect) {
 
       if (dialect.allowSignificantIndentation && curr.token == COLON && aheadIsNewLine(legacyIndex)) {
         curr.token = COLONEOL
+        emitToken()
+        legacyIndex += 2
+      } else {
+        emitToken()
+        nextToken()
       }
-
-      emitToken()
-      nextToken()
 
       // NOTE: need to track this in order to correctly emit SpliceEnd tokens after splices end
       var braceBalance1 = braceBalance

@@ -36,15 +36,17 @@ class SignificantIndentationSuite extends BaseDottySuite {
   test("indent-and-back".only) {
     val code = """|object O:
                   |  class C:
-                  |    def f: Int
-                  |  enum Color:
-                  |    case Red, Green, Blue
+                  |    def f: Int = 3
+                  |  trait T:
+                  |    def f: Int = 4
                   |""".stripMargin
     runTestAssert[Stat](code, assertLayout = None)(
-      Defn.Object(Nil, Term.Name("O"), Template(Nil, Nil, Self(Name(""), None), List(
-        Defn.Class(Nil, Type.Name("C"), Nil, ctor, Template(Nil, Nil, Self(Name(""), None), List(defx))),
-        Defn.Enum(Nil, Type.Name("Color"), Nil, ctor, Template(Nil, Nil, Self(Name(""), None), List(rgbcase)))
-      )))
+Defn.Object(Nil, Term.Name("O"), Template(Nil, Nil, Self(Name(""), None), List(
+  Defn.Class(Nil, Type.Name("C"), Nil, ctor, Template(Nil, Nil, Self(Name(""), None), List(
+    Defn.Def(Nil, Term.Name("f"), Nil, Nil, Some(Type.Name("Int")), Lit.Int(3))))),
+   Defn.Trait(Nil, Type.Name("T"), Nil, Ctor.Primary(Nil, Name(""), Nil), Template(Nil, Nil, Self(Name(""), None), List(
+     Defn.Def(Nil, Term.Name("f"), Nil, Nil, Some(Type.Name("Int")), Lit.Int(4)))))
+   )))
     )
   }
 }

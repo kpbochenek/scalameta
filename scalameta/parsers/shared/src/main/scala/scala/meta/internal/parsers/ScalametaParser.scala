@@ -195,10 +195,10 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     val parserTokens = mutable.ArrayBuilder.make[Token]
     val parserTokenPositions = mutable.ArrayBuilder.make[Int]
 
-    var currentIndent = 0
     var calculateAndEmitIndent = false
     var mustEmit = false
     var makeIndent = -1
+    var addRegion = -1
 
     @tailrec def loop(prevPos: Int, currPos: Int, sepRegionsP: List[(Char, Int)]): Unit = {
       if (currPos >= scannerTokens.length) return
@@ -212,30 +212,43 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
       }
       val next = if (nextPos != -1) scannerTokens(nextPos) else null
       
+      val currentIndent = {
+        if (curr.is[Whitespace]) -1 else {
+        var i = currPos - 1
+        var ind = 0
+        while (i >= 0 && (scannerTokens(i).is[Space] || scannerTokens(i).is[Tab]) ) {
+          i -= 1
+          ind += 1
+        }
+        val ff = if (i < 0 || scannerTokens(i).is[LF] || scannerTokens(i).is[ColonEol]) {
+          ind
+        } else {
+          -1
+        }
+        if (ff >= 0)
+        println(s"Calculated (${curr.token.text}) ID ${ff}")
+        ff
+      }
+      }
+
       if (dialect.allowSignificantIndentation) {
         if (curr.is[ColonEol]) {
-          calculateAndEmitIndent = true
-          currentIndent = 0
           mustEmit = true
         }
-        else if (curr.is[LineEnd] && sepRegionsP.nonEmpty && sepRegionsP.head._1 == 'O') {
-          calculateAndEmitIndent = true
-          currentIndent = 0
-        }
-        else if (curr.is[Whitespace] && calculateAndEmitIndent) {
-          currentIndent += 1
-        }
-        else if (curr.isNot[Whitespace] && calculateAndEmitIndent) {
-          println(s"MAKE INDENT => ${currentIndent} :: !${curr.text}!")
-          makeIndent = currentIndent
-          currentIndent = 0
-          calculateAndEmitIndent = false
-        }
-        else if (curr.is[EOF]) {
-          sepRegionsP.filter(_._1 == 'O').foreach { _ => 
-              parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
-              parserTokenPositions += currPos
-          }
+        // else if (curr.is[EOF]) {
+        //   println(s"DBG ${sepRegionsP}")
+        //   sepRegionsP.filter(_._1 == 'O').foreach { c => 
+        //     println(s"OUTDENT ${c._2}")
+        //       parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
+        //       parserTokenPositions += currPos
+        //   }
+        // }
+        else if (mustEmit && currentIndent > 0) {
+            parserTokens += new Indentation.Indent(curr.input, curr.dialect, curr.start, curr.end)
+            parserTokenPositions += currPos
+            mustEmit = false
+            addRegion = currentIndent
+            println(s"INDENT ${curr.text} => ${currentIndent}")
         }
       }
 
@@ -249,29 +262,11 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           next.pos.startLine > curr.pos.endLine
       if (curr.isNot[Trivia] && !isTrailingComma) {
 
-        val sepRegions = if (makeIndent >= 0) {
-          var sepRegionsI = sepRegionsP
-          while (sepRegionsI.nonEmpty && sepRegionsI.head._1 == 'O' && sepRegionsI.head._2 > makeIndent) {
-            parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
-            parserTokenPositions += currPos
-            sepRegionsI = sepRegionsI.tail
-          }
-
-          if (mustEmit) {
-            println("Indenting!")
-            parserTokens += new Indentation.Indent(curr.input, curr.dialect, curr.start, curr.end)
-            parserTokenPositions += currPos
-            mustEmit = false
-          }
-          sepRegionsI
-        } else { sepRegionsP }
-
-        parserTokens += curr
-        parserTokenPositions += currPos
+        val sepRegions = sepRegionsP
 
         val sepRegions1 = {
           if (curr.is[LeftParen]) (')', 0) :: sepRegions
-          else if (makeIndent > 0) ('O', makeIndent) :: sepRegions
+          else if (addRegion > 0) ('O', addRegion) :: sepRegions
           else if (curr.is[LeftBracket]) (']', 0) :: sepRegions
           else if (curr.is[LeftBrace]) {
             // After encountering keyword Enum we add artificial '{' on top of stack.
@@ -286,13 +281,19 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
             if (!sepRegions.isEmpty && sepRegions.head._1 == '$') sepRegions
             else ('\u21d2', 0) :: sepRegions
           } else if (curr.is[RightBrace]) {
-            println(s"BEFORE ${sepRegions}")
             var sepRegions1 = sepRegions
             while (!sepRegions1.isEmpty && (sepRegions1.head._1 != '}' && sepRegions1.head._1 != '$'))
               sepRegions1 = sepRegions1.tail
             if (!sepRegions1.isEmpty) sepRegions1 = sepRegions1.tail
-            println(s"AFTER ${sepRegions1}")
             sepRegions1
+          } else if (sepRegions.nonEmpty && sepRegions.head._1 == 'O' && currentIndent >= 0) {
+            var sepRegionsI = sepRegions
+            while (sepRegionsI.nonEmpty && sepRegionsI.head._1 == 'O' && sepRegionsI.head._2 > currentIndent) {
+              parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
+              parserTokenPositions += currPos
+              sepRegionsI = sepRegionsI.tail
+            }
+            sepRegionsI
           } else if (curr.is[RightBracket]) {
             if (!sepRegions.isEmpty && sepRegions.head._1 == ']') sepRegions.tail else sepRegions
           } else if (curr.is[RightParen]) {
@@ -301,7 +302,11 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
             if (!sepRegions.isEmpty && sepRegions.head._1 == '\u21d2') sepRegions.tail else sepRegions
           } else sepRegions // do nothing for other tokens
         }
-        makeIndent = -1
+
+        parserTokens += curr
+        parserTokenPositions += currPos
+
+        addRegion = -1
         loop(currPos, currPos + 1, sepRegions1)
       } else {
         var i = prevPos + 1
@@ -310,16 +315,12 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         var newlines = false
         while (i < nextPos) {
           if (scannerTokens(i).is[LF] || scannerTokens(i).is[FF]) {
-            currentIndent = 0
             lastNewlinePos = i
             if (newlineStreak) newlines = true
             newlineStreak = true
           }
           newlineStreak &= scannerTokens(i).is[Whitespace]
           i += 1
-          if (scannerTokens(i).is[Space] || scannerTokens(i).is[Tab]) {
-          currentIndent += 1
-          }
         }
         if (lastNewlinePos != -1 &&
           prev != null && prev.is[CanEndStat] &&
@@ -339,7 +340,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     val underlying = parserTokens.result
 
     println("-" * 30)
-    //underlying.foreach(t => println(s"TOKEN ${t.name} :: ${t.text}"))
+    // underlying.foreach(t => println(s"TOKEN ${t.name} :: ${t.text}"))
     println("-" * 30)
 
     (Tokens(underlying, 0, underlying.length), parserTokenPositions.result)
@@ -406,9 +407,11 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   @inline final def inParensOrNil[T](body: => List[T]): List[T] = inParensOrError(body, Nil)
 
   @inline final def indented[T](body: => T): T = {
+    println(s"START INDENT")
     accept[Indentation.Indent]
     val ret = body
     accept[Indentation.Outdent]
+    println(s"END INDENT")
     ret
   }
 
@@ -626,7 +629,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   @classifier
   trait CloseDelim {
     def unapply(token: Token): Boolean = {
-      token.is[RightBrace] || token.is[RightBracket] || token.is[RightParen]
+      token.is[RightBrace] || token.is[RightBracket] || token.is[RightParen] || token.is[Indentation.Outdent]
     }
   }
 
@@ -782,7 +785,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   @classifier
   trait StatSep {
     def unapply(token: Token): Boolean = {
-      token.is[Semicolon] || token.is[LF] || token.is[LFLF] || token.is[EOF] || token.is[Indentation.Outdent]
+      token.is[Semicolon] || token.is[LF] || token.is[LFLF] || token.is[EOF]
     }
   }
 
@@ -3440,7 +3443,6 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
 
     newLineOptWhenFollowedBy[LeftBrace]
     val restype = fromWithinReturnType(typedOpt())
-    println(s"IS STAT SEP ${token.text}? ${token.is[StatSep]}")
     if (token.is[StatSep] || token.is[RightBrace]) {
       if (restype.isEmpty) {
         warnProcedureDeprecation
@@ -3868,7 +3870,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
       templateBody()
     } else if (token.is[ColonEol]) {
       accept[ColonEol]
-      indented(templateStatSeq())
+      indented(templateStatSeq(signifIndent=true))
     } else {
       if (token.is[LeftParen]) {
         if (parenMeansSyntaxError) {
@@ -3938,6 +3940,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
 
   def statSeq[T <: Tree: AstInfo](
       statpf: PartialFunction[Token, T],
+      signifIndent: Boolean = false,
       errorMsg: String = "illegal start of definition"
   ): List[T] = {
     val stats = new ListBuffer[T]
@@ -3949,7 +3952,16 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         stats += statpf(token)
       else if (!token.is[StatSep])
         syntaxError(errorMsg, at = token)
-      acceptStatSepOpt()
+      
+      if (signifIndent) {
+        token match {
+          case LF() | LFLF() => next()
+          case other if other.is[TemplateIntro] => ()
+          case other if other.is[Indentation.Outdent] => ()
+        }
+      } else {
+        acceptStatSepOpt()
+      }
     }
     stats.toList
   }
@@ -3970,7 +3982,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
       nonLocalDefOrDcl()
   }
 
-  def templateStatSeq(): (Self, List[Stat]) = {
+  def templateStatSeq(signifIndent: Boolean = false): (Self, List[Stat]) = {
     val emptySelf = autoPos(Self(autoPos(Name.Anonymous()), None))
     var selfOpt: Option[Self] = None
     var firstOpt: Option[Stat] = None
@@ -3993,10 +4005,10 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         acceptStatSepOpt()
       }
     }
-    (selfOpt.getOrElse(emptySelf), firstOpt ++: templateStats())
+    (selfOpt.getOrElse(emptySelf), firstOpt ++: templateStats(signifIndent))
   }
 
-  def templateStats(): List[Stat] = statSeq(templateStat)
+  def templateStats(signifIndent: Boolean = false): List[Stat] = statSeq(templateStat, signifIndent)
   def templateStat: PartialFunction[Token, Stat] = {
     case KwImport() =>
       importStmt()
