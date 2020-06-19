@@ -56,7 +56,7 @@ object Modifier {
   def unapply(token: Token): Boolean = {
     token.is[KwAbstract] || token.is[KwFinal] || token.is[KwSealed] ||
     token.is[KwImplicit] || token.is[KwLazy] || token.is[KwPrivate] ||
-    token.is[KwProtected] || token.is[KwOverride]
+    token.is[KwProtected] || token.is[KwOverride] || token.is[KwSuper]
   }
 }
 

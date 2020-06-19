@@ -103,6 +103,7 @@ object Term {
   @ast class Block(stats: List[Stat]) extends Term {
     checkFields(stats.forall(_.isBlockStat))
   }
+  @ast class EndMarker(name: Term.Name) extends Term
   @ast class If(cond: Term, thenp: Term, elsep: Term) extends Term
   @ast class QuotedMacroExpr(body: Term) extends Term
   @ast class QuotedMacroType(tpe: Type) extends Term
@@ -483,6 +484,7 @@ object Mod {
   @ast class Final() extends Mod
   @ast class Sealed() extends Mod
   @ast class Open() extends Mod
+  @ast class Super() extends Mod
   @ast class Override() extends Mod
   @ast class Case() extends Mod
   @ast class Abstract() extends Mod

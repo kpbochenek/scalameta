@@ -177,6 +177,7 @@ object LegacyToken {
     "macro"     -> MACRO,
     "then"      -> IDENTIFIER,
     "enum"      -> ENUM,
-    "given"     -> GIVEN
+    "given"     -> GIVEN,
+    "then"      -> THEN
   )
 }

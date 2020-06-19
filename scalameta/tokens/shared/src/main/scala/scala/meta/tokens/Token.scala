@@ -69,6 +69,7 @@ object Token {
   @fixed("while") class KwWhile extends Token
   @fixed("with") class KwWith extends Token
   @fixed("yield") class KwYield extends Token
+  @fixed("then") class KwThen extends Token
 
   // Symbolic keywords
   @fixed("#") class Hash extends Token

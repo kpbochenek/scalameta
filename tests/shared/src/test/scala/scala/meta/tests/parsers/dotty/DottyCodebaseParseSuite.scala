@@ -16,7 +16,7 @@ class DottyCodebaseParseSuite extends ParseSuite {
     for (f <- d.listFiles()) {
       if (f.isDirectory()) { parseDir(f) }
       else {
-        if (f.getName().endsWith(".scala")) {
+        if (f.getName().endsWith(".scala") && !f.getAbsolutePath().contains("dotty/tests/")) {
           println(s"Testing ${f.getAbsolutePath()}")
           val content = scala.io.Source.fromFile(f)(scala.io.Codec.UTF8).mkString
           source(content)(dialects.Dotty)

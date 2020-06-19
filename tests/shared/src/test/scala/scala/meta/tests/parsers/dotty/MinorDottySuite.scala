@@ -208,6 +208,37 @@ class MinorDottySuite extends BaseDottySuite {
     )
   }
 
+  test("end-marker") {
+    runTestAssert[Stat]("end token")(
+      Term.EndMarker(Term.Name("token"))
+    )(parseTempl)
+  }
+  test("end-marker-toplevel") {
+    val code = """|object a:
+                  |  val x = 3
+                  |end a
+                  |
+                  |type K = Map
+                  |""".stripMargin
+    runTestAssert[Source](code, assertLayout = None)(
+      Source(List(Defn.Object(Nil, Term.Name("a"), tpl(List(
+        Defn.Val(Nil, List(Pat.Var(Term.Name("x"))), None, Lit.Int(3))))),
+         Term.EndMarker(Term.Name("a")), Defn.Type(Nil, Type.Name("K"), Nil, Type.Name("Map"))))
+    )(parseSource)
+  }
+
+  test("trait-extends-coma-separated") {
+    runTestAssert[Stat]("trait Foo extends A, B, C", assertLayout = Some("trait Foo extends A with B with C"))(
+      Defn.Trait(Nil, Type.Name("Foo"), Nil, Ctor.Primary(Nil, Name(""), Nil), Template(Nil, List(init("A"), init("B"), init("C")), Self(Name(""), None), Nil))
+    )(parseTempl)
+  }
+
+  test("super-trait") {
+    runTestAssert[Stat]("super trait Foo")(
+      Defn.Trait(List(Mod.Super()), Type.Name("Foo"), Nil, Ctor.Primary(Nil, Name(""), Nil), Template(Nil, Nil, Self(Name(""), None), Nil))
+    )(parseTempl)
+  }
+
   test("class-parameters-using") {
     runTestAssert[Stat]("trait A(using String)")(
       Defn.Trait(Nil, pname("A"), Nil, ctorp(List(tparamUsing("", "String"))), tpl(Nil))

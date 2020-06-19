@@ -549,6 +549,7 @@ object TreeSyntax {
       case t: Term.ForYield =>
         m(Expr1, s(kw("for"), " (", r(t.enums, "; "), ") ", kw("yield"), " ", t.body))
       case t: Term.New => m(SimpleExpr, s(kw("new"), " ", t.init))
+      case t: Term.EndMarker => s(kw("end"), " ", t.name)
       case t: Term.NewAnonymous =>
         val needsExplicitBraces = {
           val selfIsEmpty = t.templ.self.name.is[Name.Anonymous] && t.templ.self.decltpe.isEmpty
@@ -1027,6 +1028,7 @@ object TreeSyntax {
       case _: Mod.Using => kw("using")
       case _: Mod.Override => kw("override")
       case _: Mod.Case => kw("case")
+      case _: Mod.Super => kw("super")
       case _: Mod.Abstract => kw("abstract")
       case _: Mod.Covariant => kw("+")
       case _: Mod.Contravariant => kw("-")
