@@ -208,11 +208,26 @@ class MinorDottySuite extends BaseDottySuite {
     )
   }
 
+  test("vararg-class-parameter".only) {
+    runTestAssert[Stat]("class Tpe(expected: Type, addend: => String*)")(
+      Term.EndMarker(Term.Name("token"))
+    )(parseTempl)
+  }
+
+
   test("end-marker") {
     runTestAssert[Stat]("end token")(
       Term.EndMarker(Term.Name("token"))
     )(parseTempl)
   }
+
+  test("end-marker-keyword") {
+    val markers = List("if", "while", "for", "match", "try", "new", "this", "given", "extension", "val")
+    for (m <- markers) {
+      parseTempl(s"end ${m}")
+    }
+  }
+
   test("end-marker-toplevel") {
     val code = """|object a:
                   |  val x = 3

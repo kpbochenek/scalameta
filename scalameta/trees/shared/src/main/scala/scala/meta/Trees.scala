@@ -496,6 +496,7 @@ object Mod {
   @ast class Inline() extends Mod
   @ast class Using() extends Mod
   @ast class Opaque() extends Mod
+  @ast class Transparent() extends Mod
 }
 
 @branch trait Enumerator extends Tree

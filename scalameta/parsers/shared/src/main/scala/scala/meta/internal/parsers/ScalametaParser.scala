@@ -326,7 +326,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           scannerTokens(i).is[LF]
         }
 
-        if (dialect.allowSignificantIndentation && (curr.is[KwYield] || curr.is[KwMatch] || curr.is[KwThen] || curr.is[KwElse] || curr.is[Equals]) && isAheadNewLine()) {
+        if (dialect.allowSignificantIndentation && (curr.is[KwYield] || curr.is[KwTry] || curr.is[KwMatch] || curr.is[KwDo] || curr.is[KwThen] || curr.is[KwElse] || curr.is[Equals]) && isAheadNewLine()) {
           mustEmit = true
         }
 
@@ -363,7 +363,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     loop(-1, 0, Nil)
     val underlying = parserTokens.result
 
-    println("-" * 30)
+    // println("-" * 30)
     // underlying.foreach(t => println(s"TOKEN ${t.name} :: ${t.text}"))
     println("-" * 30)
 
@@ -667,9 +667,18 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   }
 
   @classifier
+  trait EndMarkerWord {
+    def unapply(token: Token): Boolean = {
+      token.is[Ident] || token.is[KwIf] || token.is[KwWhile] || token.is[KwFor] ||
+      token.is[KwMatch] || token.is[KwTry] || token.is[KwNew] || token.is[KwThis] ||
+      token.is[KwGiven] || token.is[KwVal]  /* extension is ommited here as it is SoftKeyword <-> Ident */
+    }
+  }
+
+  @classifier
   trait EndMarkerIntro {
       def unapply(token: Token): Boolean = {
-        token.is[Ident] && token.text == "end" && token.next.is[Ident] && (token.next.strictNext.is[LF] || token.next.strictNext.is[EOF])
+        token.is[Ident] && token.text == "end" && token.next.is[EndMarkerWord] && (token.next.strictNext.is[LF] || token.next.strictNext.is[EOF])
       }
   }
 
@@ -740,6 +749,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
       token.is[KwProtected] || token.is[KwOverride] ||
       (isSoftKw(token, SoftKeyword.SkOpaque) && dialect.allowOpaqueTypes) ||
       (isSoftKw(token, SoftKeyword.SkOpen) && dialect.allowOpenClass) ||
+      (isSoftKw(token, SoftKeyword.SkTransparent) && dialect.allowInlineMods) ||
       (token.is[KwSuper] && dialect.allowSuperTrait && token.next.is[KwTrait]) ||
       isInlineSoftKw(token)
     }
@@ -1735,6 +1745,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         next()
         val body: Term = token match {
           case LeftBrace() => autoPos(inBracesOrUnit(block()))
+          case Indentation.Indent() => indented(extractWhenSingle(block()))
           case p @ LeftParen() =>
             val term = inParensOrTupleOrUnit(location, allowRepeated)
             term match {
@@ -1770,11 +1781,22 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           case _ => unreachable(debug(catchopt))
         }
       case KwWhile() =>
-        next()
-        val cond = condExpr()
-        newLinesOpt()
-        val body = expr()
-        Term.While(cond, body)
+        next() // accept "while"
+        if (token.is[LeftParen]) {
+          val cond = condExpr()
+          newLinesOpt()
+          val body = expr()
+          Term.While(cond, body)
+        } else {
+          val cond = expr()
+          accept[KwDo]
+          if (token.is[Indentation.Indent]) {
+            Term.While(cond, indented(extractWhenSingle(block())))
+          } else {
+            Term.While(cond, expr())
+          }
+
+        }
       case KwDo() =>
         next()
         val body = expr()
@@ -2828,6 +2850,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
       case KwProtected() => accessModifier()
       case Ident(SoftKeyword.SkInline.name) if dialect.allowInlineMods => next(); Mod.Inline()
       case Ident(SoftKeyword.SkOpen.name) if dialect.allowOpenClass => next(); Mod.Open()
+      case Ident(SoftKeyword.SkTransparent.name) if dialect.allowInlineMods => next(); Mod.Transparent()
       case Ident(SoftKeyword.SkOpaque.name) if dialect.allowOpaqueTypes => next(); Mod.Opaque()
       case _ => syntaxError(s"modifier expected but ${token.name} found", at = token)
     })
@@ -2859,6 +2882,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
       case KwVal() if !dialect.allowUnquotes => next(); Mod.ValParam()
       case KwVar() if !dialect.allowUnquotes => next(); Mod.VarParam()
       case Ident(SoftKeyword.SkOpen.name) if dialect.allowOpenClass => next(); Mod.Open()
+      case Ident(SoftKeyword.SkTransparent.name) if dialect.allowInlineMods => next(); Mod.Transparent()
       case Ident(SoftKeyword.SkInline.name) if dialect.allowInlineMods => next(); Mod.Inline()
       case Ident("valparam") if dialect.allowUnquotes => next(); Mod.ValParam()
       case Ident("varparam") if dialect.allowUnquotes => next(); Mod.VarParam()
@@ -3277,8 +3301,14 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
 
   def endMarker(): Stat = autoPos {
     assert(token.text == "end")
-    next() 
-    EndMarker(termName())
+    next()
+    if (token.is[Ident]) {
+      EndMarker(termName())
+    } else {
+      val r = EndMarker(Term.Name(token.text))
+      next()
+      r
+    }
   }
 
   def patDefOrDcl(mods: List[Mod]): Stat = atPos(mods, auto) {
@@ -4191,6 +4221,8 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         next()
       } else if (token.is[Ellipsis]) {
         stats += ellipsis(1, astInfo[Stat])
+      } else if (token.is[EndMarkerIntro]) {
+        stats += endMarker()
       } else {
         syntaxError("illegal start of statement", at = token)
       }
@@ -4313,6 +4345,8 @@ object SoftKeyword {
   case object SkOpaque extends SoftKeyword { override val name = "opaque" }
 
   case object SkOpen extends SoftKeyword { override val name = "open" }
+
+  case object SkTransparent extends SoftKeyword { override val name = "transparent" }
 
   case object SkEnd extends SoftKeyword { override val name = "end" }
 }

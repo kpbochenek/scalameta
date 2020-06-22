@@ -60,6 +60,16 @@ Defn.Object(Nil, Term.Name("O"), Template(Nil, Nil, Self(Name(""), None), List(
     )
   }
 
+  test("indent-if-multiline".only) {
+    val code = """|if a == true
+                  |  || b == true
+                  |then f(x)
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Term.If(Term.ApplyInfix(Term.Name("a"), Term.Name("=="), Nil, List(Lit.Boolean(true))), Term.Apply(Term.Name("f"), List(Term.Name("x"))), Lit.Unit())
+    )
+  }
+
   test("old-if-else") {
     val code = """|if (a == true)
                   |  f(x)
@@ -139,6 +149,28 @@ Defn.Object(Nil, Term.Name("O"), Template(Nil, Nil, Self(Name(""), None), List(
       Term.Match(Term.Name("x"), List(Case(Lit.Int(1), None, Lit.String("OK")), Case(Lit.Int(2), None, Lit.String("ERROR"))))
     )
   }
+
+  test("indent-while-do") {
+    val code = """|while cond do
+                  |  run()
+                  |  3
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Term.While(Term.Name("cond"), Term.Block(List(Term.Apply(Term.Name("run"), Nil), Lit.Int(3))))
+    )
+  }
+
+  test("indent-try") {
+    val code = """|try
+                  |  run()
+                  |  3
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Term.Try(Term.Block(List(Term.Apply(Term.Name("run"), Nil), Lit.Int(3))), Nil, None)
+    )
+  }
+
+
 
   test("indent-match-zero".ignore) {
     val code = """|
