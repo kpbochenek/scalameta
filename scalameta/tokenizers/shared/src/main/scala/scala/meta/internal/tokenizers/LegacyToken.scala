@@ -70,6 +70,7 @@ object LegacyToken {
   final val VAR = 74
   final val ENUM = 75
   final val GIVEN = 76
+  final val EXPORT = 77
 
   /** control structures */
   final val IF = 80
@@ -139,6 +140,7 @@ object LegacyToken {
     "if"        -> IF,
     "implicit"  -> IMPLICIT,
     "import"    -> IMPORT,
+    "export"    -> EXPORT,
     "lazy"      -> LAZY,
     "match"     -> MATCH,
     "new"       -> NEW,

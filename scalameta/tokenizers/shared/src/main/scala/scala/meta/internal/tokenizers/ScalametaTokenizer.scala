@@ -73,6 +73,7 @@ class ScalametaTokenizer(input: Input, dialect: Dialect) {
 
         case PACKAGE => Token.KwPackage(input, dialect, curr.offset)
         case IMPORT => Token.KwImport(input, dialect, curr.offset)
+        case EXPORT => Token.KwExport(input, dialect, curr.offset)
         case CLASS => Token.KwClass(input, dialect, curr.offset)
         case CASECLASS => unreachable
         case OBJECT => Token.KwObject(input, dialect, curr.offset)

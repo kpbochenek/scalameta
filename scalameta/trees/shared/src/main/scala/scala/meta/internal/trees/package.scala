@@ -178,6 +178,7 @@ package object trees {
     def isTemplateStat: Boolean = stat match {
       case _: Stat.Quasi => true
       case _: Import => true
+      case _: Export => true
       case _: Term => true
       case _: Decl => true
       case _: Defn => true

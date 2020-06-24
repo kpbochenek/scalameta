@@ -6,10 +6,16 @@ import java.io.File
 
 class DottyCodebaseParseSuite extends ParseSuite {
   
+  var files = 0
+  var errors: List[String] = List()
+
   test("parse-dotty-codebase") {
     val dottyPath = "/home/kpbochenek/vl/github/kris/dotty/"
 
     parseDir(new File(dottyPath))
+
+    println(s"FILES: ${files} / ${errors.length}")
+    errors.foreach(println)
   }
 
   private def parseDir(d: File): Unit = {
@@ -23,10 +29,16 @@ class DottyCodebaseParseSuite extends ParseSuite {
           !f.getAbsolutePath().contains("out/bootstrap")) {
           println(s"Testing ${f.getAbsolutePath()}")
           val content = scala.io.Source.fromFile(f)(scala.io.Codec.UTF8).mkString
+          files += 1
+          try {
           source(content)(dialects.Dotty)
+          } catch {
+            case e: Exception => 
+              throw e
+              errors = f.getAbsolutePath() +: errors
+          }
         }
       }
     }
-
   }
 }

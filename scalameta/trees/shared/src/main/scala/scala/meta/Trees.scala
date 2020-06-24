@@ -507,6 +507,7 @@ object Enumerator {
 }
 
 @ast class Import(importers: List[Importer] @nonEmpty) extends Stat
+@ast class Export(given: Boolean, importers: List[Importer] @nonEmpty) extends Stat
 
 @ast class Importer(ref: Term.Ref, importees: List[Importee] @nonEmpty) extends Tree {
   checkFields(ref.isStableId)
@@ -515,6 +516,7 @@ object Enumerator {
 @branch trait Importee extends Tree with Ref
 object Importee {
   @ast class Wildcard() extends Importee
+  @ast class Given(importee: Importee) extends Importee
   @ast class Name(name: scala.meta.Name) extends Importee {
     checkFields(name.is[scala.meta.Name.Quasi] || name.is[scala.meta.Name.Indeterminate])
   }

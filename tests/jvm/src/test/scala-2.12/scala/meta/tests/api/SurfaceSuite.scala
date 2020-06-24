@@ -404,6 +404,7 @@ class SurfaceSuite extends FunSuite {
       |scala.meta.tokens.Token.KwElse
       |scala.meta.tokens.Token.KwEnum
       |scala.meta.tokens.Token.KwExtends
+      |scala.meta.tokens.Token.KwExport
       |scala.meta.tokens.Token.KwFalse
       |scala.meta.tokens.Token.KwFinal
       |scala.meta.tokens.Token.KwFinally

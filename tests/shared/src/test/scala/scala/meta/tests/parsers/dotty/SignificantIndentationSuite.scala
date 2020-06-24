@@ -60,13 +60,16 @@ Defn.Object(Nil, Term.Name("O"), Template(Nil, Nil, Self(Name(""), None), List(
     )
   }
 
-  test("indent-if-multiline".only) {
+  test("indent-if-multiline") {
     val code = """|if a == true
                   |  || b == true
                   |then f(x)
                   |""".stripMargin
     runTestAssert[Stat](code, assertLayout = None)(
-      Term.If(Term.ApplyInfix(Term.Name("a"), Term.Name("=="), Nil, List(Lit.Boolean(true))), Term.Apply(Term.Name("f"), List(Term.Name("x"))), Lit.Unit())
+      Term.If(
+        Term.ApplyInfix(Term.ApplyInfix(Term.Name("a"), Term.Name("=="), Nil, List(Lit.Boolean(true))), Term.Name("||"), Nil, List(Term.ApplyInfix(Term.Name("b"), Term.Name("=="), Nil, List(Lit.Boolean(true))))),
+        Term.Apply(Term.Name("f"), List(Term.Name("x"))), Lit.Unit()
+      )
     )
   }
 
@@ -170,7 +173,40 @@ Defn.Object(Nil, Term.Name("O"), Template(Nil, Nil, Self(Name(""), None), List(
     )
   }
 
+  test("indent-try-catch") {
+    val code = """|def x: Unit = 
+                  |  try
+                  |    run()
+                  |    3
+                  |  catch case ex: MatchError => ok()
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Defn.Def(Nil, Term.Name("x"), Nil, Nil, Some(Type.Name("Unit")), Term.Try(Term.Block(List(Term.Apply(Term.Name("run"), Nil), Lit.Int(3))), List(Case(Pat.Typed(Pat.Var(Term.Name("ex")), Type.Name("MatchError")), None, Term.Apply(Term.Name("ok"), Nil))), None))
+    )
+  }
 
+  test("indent-try-finally") {
+    val code = """|def x: Unit = 
+                  |  try
+                  |    run()
+                  |    3
+                  |  finally f()
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Defn.Def(Nil, Term.Name("x"), Nil, Nil, Some(Type.Name("Unit")), Term.Try(Term.Block(List(Term.Apply(Term.Name("run"), Nil), Lit.Int(3))), Nil, Some(Term.Apply(Term.Name("f"), Nil))))
+    )
+  }
+
+
+  test("indent-for") {
+    val code = """|for a <- b do
+                  |  r1()
+                  |  r2()
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Term.Try(Term.Block(List(Term.Apply(Term.Name("run"), Nil), Lit.Int(3))), Nil, None)
+    )
+  }
 
   test("indent-match-zero".ignore) {
     val code = """|
@@ -204,12 +240,38 @@ Term.Match(Term.Name("x"), List(Case(Lit.Int(1), None, Lit.String("OK")), Case(L
     )
   }
 
+  test("indent-lflf") {
+    val code = """|object a:
+                  |  def f =
+                  |    fx =
+                  |      c()
+                  |
+                  |  def g =
+                  |    b()
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Defn.Object(Nil, Term.Name("a"), Template(Nil, Nil, Self(Name(""), None), List(Defn.Def(Nil, Term.Name("f"), Nil, Nil, None, Term.Assign(Term.Name("fx"), Term.Apply(Term.Name("c"), Nil))), Defn.Def(Nil, Term.Name("g"), Nil, Nil, None, Term.Apply(Term.Name("b"), Nil)))))
+    )
+  }
+
   test("indent-given") {
     val code = """|given String =
                   |  "aaa"
                   |""".stripMargin
     runTestAssert[Stat](code, assertLayout = None)(
 Defn.GivenAlias(Nil, Name(""), Nil, Nil, Type.Name("String"), Lit.String("aaa"))
+    )
+  }
+
+  test("indent-enum") {
+    val code = """|enum Atom:
+                  |  case R(a: Int)
+                  |  case G, B
+                  |  def f: Unit =
+                  |    "OK"
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Defn.Enum(Nil, Type.Name("Atom"), Nil, Ctor.Primary(Nil, Name(""), Nil), Template(Nil, Nil, Self(Name(""), None), List(Defn.EnumCase(Nil, Term.Name("R"), Nil, Ctor.Primary(Nil, Name(""), List(List(Term.Param(Nil, Term.Name("a"), Some(Type.Name("Int")), None)))), Nil), Defn.RepeatedEnumCase(Nil, List(Term.Name("G"), Term.Name("B"))), Defn.Def(Nil, Term.Name("f"), Nil, Nil, Some(Type.Name("Unit")), Lit.String("OK")))))
     )
   }
 
@@ -241,6 +303,19 @@ Defn.GivenAlias(Nil, Name(""), Nil, Nil, Type.Name("String"), Lit.String("aaa"))
     )
   }
 
+  test("indent-param") {
+    val code = """|val where =
+                  |  c(a)(
+                  |    vparamss = f(x),
+                  |    rhs =
+                  |      if (cond) copyParams()
+                  |      else tree.rhs)
+                  |""".stripMargin
+    runTestAssert[Stat](code, assertLayout = None)(
+      Defn.Val(Nil, List(Pat.Var(Term.Name("where"))), None, Term.Apply(Term.Apply(Term.Name("c"), List(Term.Name("a"))), List(Term.Assign(Term.Name("vparamss"), Term.Apply(Term.Name("f"), List(Term.Name("x")))), Term.Assign(Term.Name("rhs"), Term.If(Term.Name("cond"), Term.Apply(Term.Name("copyParams"), Nil), Term.Select(Term.Name("tree"), Term.Name("rhs")))))))
+    )
+
+  }
 
 
 

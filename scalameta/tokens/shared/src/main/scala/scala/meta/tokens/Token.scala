@@ -45,6 +45,7 @@ object Token {
   @fixed("if") class KwIf extends Token
   @fixed("implicit") class KwImplicit extends Token
   @fixed("import") class KwImport extends Token
+  @fixed("export") class KwExport extends Token
   @fixed("lazy") class KwLazy extends Token
   @fixed("match") class KwMatch extends Token
   @fixed("macro") class KwMacro extends Token

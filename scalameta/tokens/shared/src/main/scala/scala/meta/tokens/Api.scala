@@ -44,6 +44,8 @@ private[meta] trait Aliases {
     val KwImplicit = scala.meta.tokens.Token.KwImplicit
     type KwImport = scala.meta.tokens.Token.KwImport
     val KwImport = scala.meta.tokens.Token.KwImport
+    type KwExport = scala.meta.tokens.Token.KwExport
+    val KwExport = scala.meta.tokens.Token.KwExport
     type KwLazy = scala.meta.tokens.Token.KwLazy
     val KwLazy = scala.meta.tokens.Token.KwLazy
     type KwMatch = scala.meta.tokens.Token.KwMatch

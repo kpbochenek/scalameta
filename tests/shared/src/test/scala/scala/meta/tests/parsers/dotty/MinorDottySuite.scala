@@ -208,7 +208,7 @@ class MinorDottySuite extends BaseDottySuite {
     )
   }
 
-  test("vararg-class-parameter".only) {
+  test("vararg-class-parameter") {
     runTestAssert[Stat]("class Tpe(expected: Type, addend: => String*)")(
       Term.EndMarker(Term.Name("token"))
     )(parseTempl)

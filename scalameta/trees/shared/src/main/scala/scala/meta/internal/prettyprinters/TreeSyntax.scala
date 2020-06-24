@@ -1047,11 +1047,14 @@ object TreeSyntax {
 
       // Import
       case t: Importee.Name => s(t.name)
+      case t: Importee.Given => s(kw("given"), " ", t.importee)
       case t: Importee.Rename => s(t.name, " ", kw("=>"), " ", t.rename)
       case t: Importee.Unimport => s(t.name, " ", kw("=>"), " ", kw("_"))
       case _: Importee.Wildcard => kw("_")
       case t: Importer => s(t.ref, ".", t.importees)
       case t: Import => s(kw("import"), " ", r(t.importers, ", "))
+      case t: Export => if(t.given) s(kw("export"), " ", kw("given"), " ", r(t.importers, ", "))
+                        else s(kw("export"), " ", r(t.importers, ", "))
 
       // Case
       case t: Case =>
