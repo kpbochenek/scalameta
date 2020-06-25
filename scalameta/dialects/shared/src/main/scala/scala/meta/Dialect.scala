@@ -82,6 +82,8 @@ final class Dialect private (
     val allowToplevelStatements: Boolean,
     // Opaque types introduced in dotty
     val allowOpaqueTypes: Boolean,
+    // Literal Unit Type
+    val allowLiteralUnitType: Boolean,
     // Significant identation introduced in dotty
     val allowSignificantIndentation: Boolean,
     // Super traits
@@ -153,6 +155,7 @@ final class Dialect private (
       allowWhiteboxMacro = false,
       allowToplevelStatements = false,
       allowOpaqueTypes = false,
+      allowLiteralUnitType = false,
       allowSignificantIndentation = false,
       allowSuperTrait = false
       // NOTE(olafur): declare the default value for new fields above this comment.
@@ -260,6 +263,10 @@ final class Dialect private (
     privateCopy(allowOpaqueTypes = newValue)
   }
 
+  def withAllowLiteralUnitType(newValue: Boolean): Dialect = {
+    privateCopy(allowLiteralUnitType = newValue)
+  }
+
   def withAllowSignificantIndentation(newValue: Boolean): Dialect = {
     privateCopy(allowSignificantIndentation = newValue)
   }
@@ -305,6 +312,7 @@ final class Dialect private (
       allowWhiteboxMacro: Boolean = this.allowWhiteboxMacro,
       allowToplevelStatements: Boolean = this.allowToplevelStatements,
       allowOpaqueTypes: Boolean = this.allowOpaqueTypes,
+      allowLiteralUnitType: Boolean = this.allowLiteralUnitType,
       allowSignificantIndentation: Boolean = this.allowSignificantIndentation,
       allowSuperTrait: Boolean = this.allowSuperTrait
       // NOTE(olafur): add the next parameter above this comment.
@@ -341,6 +349,7 @@ final class Dialect private (
       allowWhiteboxMacro,
       allowToplevelStatements,
       allowOpaqueTypes,
+      allowLiteralUnitType,
       allowSignificantIndentation,
       allowSuperTrait
       // NOTE(olafur): add the next argument above this comment.
