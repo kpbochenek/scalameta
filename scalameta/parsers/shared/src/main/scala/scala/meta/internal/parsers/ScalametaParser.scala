@@ -3254,11 +3254,11 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     } else {
       val importees = inBraces(commaSeparated(importee()))
 
-      if (importees.nonEmpty) {
-        importees.init.foreach {
+      val imp = if (importees.nonEmpty && importees.last.is[Importee.Given]) importees.init else importees
+      if (imp.nonEmpty) {
+        imp.init.foreach {
           case importee: Importee.Wildcard =>
             syntaxError("Wildcard import must be in the last position", importee.pos)
-
           case _ => ()
         }
       }
