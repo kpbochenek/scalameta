@@ -103,7 +103,7 @@ class ControlSyntaxSuite extends BaseDottySuite {
     val code = """|if (a) || (b) then f(x)
                   |""".stripMargin
     runTestAssert[Stat](code, assertLayout = None)(
-      Term.If(Term.ApplyInfix(Term.Name("a"), Term.Name("=="), Nil, List(Lit.Boolean(true))), Term.Block(List(Term.Apply(Term.Name("f"), List(Term.Name("x"))), Term.Apply(Term.Name("println"), List(Lit.String("OK"))))), Term.Block(List(Term.Apply(Term.Name("g"), List(Term.Name("x"))), Term.Apply(Term.Name("println"), List(Lit.String("ERROR"))))))
+      Term.If(Term.ApplyInfix(Term.Name("a"), Term.Name("||"), Nil, List(Term.Name("b"))), Term.Apply(Term.Name("f"), List(Term.Name("x"))), Lit.Unit())
     )
   }
 
@@ -113,7 +113,7 @@ class ControlSyntaxSuite extends BaseDottySuite {
                   |then f(x)
                   |""".stripMargin
     runTestAssert[Stat](code, assertLayout = None)(
-      Term.If(Term.ApplyInfix(Term.Name("a"), Term.Name("=="), Nil, List(Lit.Boolean(true))), Term.Block(List(Term.Apply(Term.Name("f"), List(Term.Name("x"))), Term.Apply(Term.Name("println"), List(Lit.String("OK"))))), Term.Block(List(Term.Apply(Term.Name("g"), List(Term.Name("x"))), Term.Apply(Term.Name("println"), List(Lit.String("ERROR"))))))
+      Term.If(Term.ApplyInfix(Term.Name("a"), Term.Name("||"), Nil, List(Term.Name("b"))), Term.Apply(Term.Name("f"), List(Term.Name("x"))), Lit.Unit())
     )
 
   }

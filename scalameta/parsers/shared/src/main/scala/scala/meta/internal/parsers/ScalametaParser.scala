@@ -1725,6 +1725,12 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
   def expr(location: Location, allowRepeated: Boolean): Term =
     autoPos(token match {
       case KwIf() =>
+        def canStartExpr(t: Token): Boolean = 
+          t.is[LeftBrace] || t.is[LeftParen] || t.is[LeftBracket] || t.is[KwThen] ||
+          t.is[KwDo] || t.is[KwIf] || t.is[KwWhile] || t.is[KwFor] ||
+          t.is[KwNew] || t.is[KwTry] || t.is[KwThrow] || t.is[Indentation.Indent] || t.is[LF]
+
+        def canBeContinued: Boolean = !canStartExpr(token)
         next()
         val (cond, thenp) = if (token.isNot[LeftParen] && dialect.allowSignificantIndentation) {
           val cond = expr()
@@ -1737,8 +1743,15 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           }
           (cond, thenp)
         } else {
-          val cond = condExpr()
+          val partialCond = condExpr()
+          println(s"IF parsed ${partialCond.structure}")
+          println(s"Can continue? ${canBeContinued}")
+          val cond = if (canBeContinued) {
+            
+            simpleExprRest(partialCond, false)
+          } else { partialCond }
           newLinesOpt()
+          println(s"IF parsed fully ${cond.structure}")
           acceptOpt[KwThen]
           val thenp = expr()
           (cond, thenp)
