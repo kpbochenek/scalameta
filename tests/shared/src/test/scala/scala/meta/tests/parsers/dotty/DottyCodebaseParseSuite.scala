@@ -9,7 +9,7 @@ class DottyCodebaseParseSuite extends ParseSuite {
   var files = 0
   var errors: List[String] = List()
 
-  test("parse-dotty-codebase") {
+  test("parse-dotty-codebase".ignore) {
     val dottyPath = "/home/kpbochenek/vl/github/kris/dotty/"
 
     parseDir(new File(dottyPath))

@@ -220,22 +220,21 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
 
       
       val currentIndent = {
-        if (curr.is[Whitespace]) -1 else {
-        var i = currPos - 1
-        var ind = 0
-        while (i >= 0 && (scannerTokens(i).is[Space] || scannerTokens(i).is[Tab]) ) {
-          i -= 1
-          ind += 1
-        }
-        val ff = if (i < 0 || scannerTokens(i).is[LF] || scannerTokens(i).is[ColonEol]) {
-          ind
-        } else {
+        if (curr.is[Whitespace]) {
           -1
+        } else {
+          var i = currPos - 1
+          var ind = 0
+          while (i >= 0 && (scannerTokens(i).is[Space] || scannerTokens(i).is[Tab]) ) {
+            i -= 1
+            ind += 1
+          }
+          if (i < 0 || scannerTokens(i).is[LF] || scannerTokens(i).is[ColonEol]) {
+            ind
+          } else {
+            -1
+          }
         }
-        // if (ff >= 0)
-        // println(s"Calculated (${curr.token.text}) ID ${ff}")
-        ff
-      }
       }
 
       if (dialect.allowSignificantIndentation) {
@@ -243,14 +242,6 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
         if (curr.is[ColonEol]) {
           mustEmit = true
         }
-        // else if (curr.is[EOF]) {
-        //   println(s"DBG ${sepRegionsP}")
-        //   sepRegionsP.filter(_._1 == 'O').foreach { c => 
-        //     println(s"OUTDENT ${c._2}")
-        //       parserTokens += new Indentation.Outdent(curr.input, curr.dialect, curr.start, curr.end)
-        //       parserTokenPositions += currPos
-        //   }
-        // }
         else if (mustEmit && currentIndent > 0) {
             parserTokens += new Indentation.Indent(curr.input, curr.dialect, curr.start, curr.end)
             parserTokenPositions += currPos
@@ -374,7 +365,7 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
     loop(-1, 0, Nil)
     val underlying = parserTokens.result
 
-    println("-" * 30)
+    // println("-" * 30)
     // underlying.foreach(t => println(s"TOKEN ${t.name} :: ${t.text}"))
     // println("-" * 30)
 
@@ -1744,14 +1735,11 @@ class ScalametaParser(input: Input, dialect: Dialect) { parser =>
           (cond, thenp)
         } else {
           val partialCond = condExpr()
-          println(s"IF parsed ${partialCond.structure}")
-          println(s"Can continue? ${canBeContinued}")
           val cond = if (canBeContinued) {
             
             simpleExprRest(partialCond, false)
           } else { partialCond }
           newLinesOpt()
-          println(s"IF parsed fully ${cond.structure}")
           acceptOpt[KwThen]
           val thenp = expr()
           (cond, thenp)
