@@ -45,7 +45,6 @@ object Token {
   @fixed("if") class KwIf extends Token
   @fixed("implicit") class KwImplicit extends Token
   @fixed("import") class KwImport extends Token
-  @fixed("export") class KwExport extends Token
   @fixed("lazy") class KwLazy extends Token
   @fixed("match") class KwMatch extends Token
   @fixed("macro") class KwMacro extends Token
@@ -70,7 +69,6 @@ object Token {
   @fixed("while") class KwWhile extends Token
   @fixed("with") class KwWith extends Token
   @fixed("yield") class KwYield extends Token
-  @fixed("then") class KwThen extends Token
 
   // Symbolic keywords
   @fixed("#") class Hash extends Token

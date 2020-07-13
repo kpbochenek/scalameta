@@ -85,9 +85,7 @@ final class Dialect private (
     // Literal Unit Type
     val allowLiteralUnitType: Boolean,
     // Significant identation introduced in dotty
-    val allowSignificantIndentation: Boolean,
-    // Super traits
-    val allowSuperTrait: Boolean
+    val allowSignificantIndentation: Boolean
 ) extends Product
     with Serializable {
 
@@ -156,8 +154,7 @@ final class Dialect private (
       allowToplevelStatements = false,
       allowOpaqueTypes = false,
       allowLiteralUnitType = false,
-      allowSignificantIndentation = false,
-      allowSuperTrait = false
+      allowSignificantIndentation = false
       // NOTE(olafur): declare the default value for new fields above this comment.
     )
   }
@@ -271,10 +268,6 @@ final class Dialect private (
     privateCopy(allowSignificantIndentation = newValue)
   }
   
-  def withAllowSuperTrait(newValue: Boolean): Dialect = {
-    privateCopy(allowSuperTrait = newValue)
-  }
-
   // NOTE(olafur): add the next `withX()` method above this comment. Please try
   // to use consistent formatting, use `newValue` as the parameter name and wrap
   // the body inside curly braces.
@@ -313,8 +306,7 @@ final class Dialect private (
       allowToplevelStatements: Boolean = this.allowToplevelStatements,
       allowOpaqueTypes: Boolean = this.allowOpaqueTypes,
       allowLiteralUnitType: Boolean = this.allowLiteralUnitType,
-      allowSignificantIndentation: Boolean = this.allowSignificantIndentation,
-      allowSuperTrait: Boolean = this.allowSuperTrait
+      allowSignificantIndentation: Boolean = this.allowSignificantIndentation
       // NOTE(olafur): add the next parameter above this comment.
   ): Dialect = {
     new Dialect(
@@ -350,8 +342,7 @@ final class Dialect private (
       allowToplevelStatements,
       allowOpaqueTypes,
       allowLiteralUnitType,
-      allowSignificantIndentation,
-      allowSuperTrait
+      allowSignificantIndentation
       // NOTE(olafur): add the next argument above this comment.
     )
   }
