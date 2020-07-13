@@ -7,7 +7,8 @@ class GivenUsingSuite extends BaseDottySuite {
 
   implicit val parseBlock: String => Stat = code => blockStat(code)(dialects.Dotty)
 
-  /** For checking examples in repl declare:
+  /**
+   * For checking examples in repl declare:
    *  trait Ord[T] { def f(): Int }
    *
    *  All examples based on dotty documentation:
@@ -519,9 +520,20 @@ class GivenUsingSuite extends BaseDottySuite {
     runTestAssert[Stat]("import File.{ given TC }")(
       Import(List(Importer(Term.Name("File"), List(Importee.Given(Importee.Name(Name("TC")))))))
     )
-    
+
     runTestAssert[Stat]("import File.{ given TC, given AC, _ }")(
-      Import(List(Importer(Term.Name("File"), List(Importee.Given(Importee.Name(Name("TC"))), Importee.Given(Importee.Name(Name("AC"))), Importee.Wildcard()))))
+      Import(
+        List(
+          Importer(
+            Term.Name("File"),
+            List(
+              Importee.Given(Importee.Name(Name("TC"))),
+              Importee.Given(Importee.Name(Name("AC"))),
+              Importee.Wildcard()
+            )
+          )
+        )
+      )
     )
   }
 }

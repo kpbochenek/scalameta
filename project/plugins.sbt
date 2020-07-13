@@ -1,6 +1,6 @@
 // exclude is a workaround for https://github.com/sbt/sbt-assembly/issues/236#issuecomment-294452474
 addSbtPlugin(
-  "com.eed3si9n" % "sbt-assembly" % "0.14.10" exclude ("org.apache.maven", "maven-plugin-api")
+  "com.eed3si9n" % "sbt-assembly" % "0.15.0" exclude ("org.apache.maven", "maven-plugin-api")
 )
 
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.2")
@@ -24,6 +24,6 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.0.1")
 
 addSbtPlugin("org.scala-debugger" % "sbt-jdi-tools" % "1.1.1")
 
-addSbtPlugin("org.scalameta" % "sbt-munit" % "0.7.7")
+addSbtPlugin("org.scalameta" % "sbt-munit" % "0.7.9")
 
-addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.0")
+addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.3")

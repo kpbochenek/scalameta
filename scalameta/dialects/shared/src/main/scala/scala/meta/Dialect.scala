@@ -69,6 +69,8 @@ final class Dialect private (
     val toplevelSeparator: String,
     // Are numeric literal underscore separators, i.e. `1_000_000` legal or not?
     val allowNumericLiteralUnderscoreSeparators: Boolean,
+    // Can try body contain any expression? (2.13.1 https://github.com/scala/scala/pull/8071)
+    val allowTryWithAnyExpr: Boolean,
     // Given/using introduced in dotty
     val allowGivenUsing: Boolean,
     // Extension methods introduced in dotty
@@ -84,10 +86,17 @@ final class Dialect private (
     val allowOpaqueTypes: Boolean,
     // Literal Unit Type
     val allowLiteralUnitType: Boolean,
+    // Super traits introduced in dotty
+    val allowSuperTrait: Boolean,
+    // Export selected members of an object introduced in dotty
+    val allowExportClause: Boolean,
+    // Extended classes separated by ',' introduced in dotty
+    val allowCommaSeparatedExtend: Boolean,
+    // end marker introduced in dotty
+    val allowEndMarker: Boolean,
     // Significant identation introduced in dotty
     val allowSignificantIndentation: Boolean
-) extends Product
-    with Serializable {
+) extends Product with Serializable {
 
   // NOTE(olafur) checklist for adding a new dialect field in a binary compatible way:
   // - add new field to primary constructor.
@@ -147,6 +156,7 @@ final class Dialect private (
       allowXmlLiterals,
       toplevelSeparator,
       allowNumericLiteralUnderscoreSeparators = false,
+      allowTryWithAnyExpr = false,
       allowGivenUsing = false,
       allowExtensionMethods = false,
       allowOpenClass = false,
@@ -154,6 +164,10 @@ final class Dialect private (
       allowToplevelStatements = false,
       allowOpaqueTypes = false,
       allowLiteralUnitType = false,
+      allowSuperTrait = false,
+      allowExportClause = false,
+      allowCommaSeparatedExtend = false,
+      allowEndMarker = false,
       allowSignificantIndentation = false
       // NOTE(olafur): declare the default value for new fields above this comment.
     )
@@ -236,10 +250,11 @@ final class Dialect private (
   def withToplevelSeparator(newValue: String): Dialect = {
     privateCopy(toplevelSeparator = newValue)
   }
-  def withAllowNumericLiteralUnderscoreSeparators(
-      newValue: Boolean
-  ): Dialect = {
+  def withAllowNumericLiteralUnderscoreSeparators(newValue: Boolean): Dialect = {
     privateCopy(allowNumericLiteralUnderscoreSeparators = newValue)
+  }
+  def withAllowTryWithAnyExpr(newValue: Boolean): Dialect = {
+    privateCopy(allowTryWithAnyExpr = newValue)
   }
   def withAllowGivenUsing(newValue: Boolean): Dialect = {
     privateCopy(allowGivenUsing = newValue)
@@ -259,11 +274,21 @@ final class Dialect private (
   def withAllowOpaqueTypes(newValue: Boolean): Dialect = {
     privateCopy(allowOpaqueTypes = newValue)
   }
-
   def withAllowLiteralUnitType(newValue: Boolean): Dialect = {
     privateCopy(allowLiteralUnitType = newValue)
   }
-
+  def withAllowSuperTrait(newValue: Boolean): Dialect = {
+    privateCopy(allowSuperTrait = newValue)
+  }
+  def withAllowExportClause(newValue: Boolean): Dialect = {
+    privateCopy(allowExportClause = newValue)
+  }
+  def withAllowCommaSeparatedExtend(newValue: Boolean): Dialect = {
+    privateCopy(allowCommaSeparatedExtend = newValue)
+  }
+  def withAllowEndMarker(newValue: Boolean): Dialect = {
+    privateCopy(allowEndMarker = newValue)
+  }
   def withAllowSignificantIndentation(newValue: Boolean): Dialect = {
     privateCopy(allowSignificantIndentation = newValue)
   }
@@ -299,6 +324,7 @@ final class Dialect private (
       toplevelSeparator: String = this.toplevelSeparator,
       allowNumericLiteralUnderscoreSeparators: Boolean =
         this.allowNumericLiteralUnderscoreSeparators,
+      allowTryWithAnyExpr: Boolean = this.allowTryWithAnyExpr,
       allowGivenUsing: Boolean = this.allowGivenUsing,
       allowExtensionMethods: Boolean = this.allowExtensionMethods,
       allowOpenClass: Boolean = this.allowOpenClass,
@@ -306,6 +332,10 @@ final class Dialect private (
       allowToplevelStatements: Boolean = this.allowToplevelStatements,
       allowOpaqueTypes: Boolean = this.allowOpaqueTypes,
       allowLiteralUnitType: Boolean = this.allowLiteralUnitType,
+      allowSuperTrait: Boolean = this.allowSuperTrait,
+      allowExportClause: Boolean = this.allowExportClause,
+      allowCommaSeparatedExtend: Boolean = this.allowCommaSeparatedExtend,
+      allowEndMarker: Boolean = this.allowEndMarker,
       allowSignificantIndentation: Boolean = this.allowSignificantIndentation
       // NOTE(olafur): add the next parameter above this comment.
   ): Dialect = {
@@ -335,6 +365,7 @@ final class Dialect private (
       allowXmlLiterals,
       toplevelSeparator,
       allowNumericLiteralUnderscoreSeparators,
+      allowTryWithAnyExpr,
       allowGivenUsing,
       allowExtensionMethods,
       allowOpenClass,
@@ -342,6 +373,10 @@ final class Dialect private (
       allowToplevelStatements,
       allowOpaqueTypes,
       allowLiteralUnitType,
+      allowSuperTrait,
+      allowExportClause,
+      allowCommaSeparatedExtend,
+      allowEndMarker,
       allowSignificantIndentation
       // NOTE(olafur): add the next argument above this comment.
     )

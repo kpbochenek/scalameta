@@ -177,9 +177,9 @@ object LegacyToken {
     "#"         -> HASH,
     "@"         -> AT,
     "macro"     -> MACRO,
-    "then"      -> IDENTIFIER,
+    "then"      -> THEN,
     "enum"      -> ENUM,
     "given"     -> GIVEN,
-    "then"      -> THEN
+    "export"    -> EXPORT
   )
 }

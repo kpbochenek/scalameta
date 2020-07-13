@@ -127,6 +127,15 @@ class LegacyScanner(input: Input, dialect: Dialect) {
 
         if (token == ENUM && !dialect.allowEnums)
           token = IDENTIFIER
+        if (token == GIVEN && !dialect.allowGivenUsing)
+          token = IDENTIFIER
+        if (token == EXPORT && !dialect.allowExportClause)
+          token = IDENTIFIER
+        if (token == THEN && !dialect.allowExportClause)
+          token = IDENTIFIER
+        if (token == TYPELAMBDAARROW && !dialect.allowTypeLambdas)
+          token = IDENTIFIER
+
       }
       if (token == IDENTIFIER && name.startsWith("$") && dialect.allowWhiteboxMacro) {
         strVal = name.stripPrefix("$")
@@ -720,8 +729,18 @@ class LegacyScanner(input: Input, dialect: Dialect) {
           cbuf.clear()
           if (kw2legacytoken contains next.name) {
             next.token = kw2legacytoken(next.name)
+
             if (next.token == ENUM && !dialect.allowEnums)
               next.token = IDENTIFIER
+            if (next.token == GIVEN && !dialect.allowGivenUsing)
+              next.token = IDENTIFIER
+            if (next.token == EXPORT && !dialect.allowExportClause)
+              next.token = IDENTIFIER
+            if (next.token == THEN && !dialect.allowExportClause)
+              next.token = IDENTIFIER
+            if (next.token == TYPELAMBDAARROW && !dialect.allowTypeLambdas)
+              next.token = IDENTIFIER
+
             if (next.token != IDENTIFIER && next.token != THIS)
               syntaxError("invalid unquote: `$'ident, `$'BlockExpr, `$'this or `$'_ expected", at = offset)
           }
