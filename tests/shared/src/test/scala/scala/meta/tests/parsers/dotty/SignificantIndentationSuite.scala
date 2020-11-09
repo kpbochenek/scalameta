@@ -679,4 +679,22 @@ class SignificantIndentationSuite extends BaseDottySuite {
       )
     )
   }
+
+  test("class-coloneol-override".ignore) {
+    runTestAssert[Stat](
+      """|case class X(
+         |  override val a = A
+         |) extends C:
+         |  override def h = 3
+         |""".stripMargin,
+      assertLayout = Some("val refinementTest: Int = {\n  fx\n  fy\n}")
+    )(
+      Defn.Val(
+        Nil,
+        List(Pat.Var(Term.Name("refinementTest"))),
+        Some(Type.Name("Int")),
+        Term.Block(List(Term.Name("fx"), Term.Name("fy")))
+      )
+    )
+  }
 }

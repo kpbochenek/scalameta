@@ -164,7 +164,8 @@ class CommunityDottySuite extends FunSuite {
     // extension will most likely become a keyword, needs fix in dotty
     // extension.getParameters.asScala(extension.get(MethodExtension).parametersListSizes(0))
     "dotty/dokka/translators/ScalaSignatureProvider.scala",
-    // [scalameta?] error: indent expected but override found
+    // [scalameta] error: indent expected but override found
+    // reproduction test: "class-coloneol-override"
     "scala3doc/src/dotty/dokka/site/PartiallyRenderedContent.scala"
   )
 
